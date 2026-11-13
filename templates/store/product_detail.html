@@ -16,8 +16,10 @@
                 <article class="gallery-wrap">
                     <div class="img-big-wrap">
                         <a href="#">
-                            <img src="{{ single_product.images.url }}"
-                                 alt="{{ single_product.product_name }}">
+                            {% if single_product.images %}
+                                <img src="{{ single_product.images.url }}"
+                                     alt="{{ single_product.product_name }}">
+                            {% endif %}
                         </a>
                     </div>
                 </article>
@@ -44,93 +46,205 @@
 
                     <hr>
 
-                    <!-- CHOOSE COLOR -->
-                    <div class="row">
-                        <div class="item-option-select">
-                            <h6>Choose Color</h6>
+                    <!-- DJANGO MESSAGES -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                                 role="alert">
 
-                            <div class="btn-group btn-group-sm btn-group-toggle"
-                                 data-toggle="buttons">
+                                {{ message }}
 
-                                <label class="btn btn-light">
-                                    <input type="radio" name="radio_color">
-                                    Silver
-                                </label>
-
-                                <label class="btn btn-light">
-                                    <input type="radio" name="radio_color">
-                                    Gray
-                                </label>
-
-                                <label class="btn btn-light active">
-                                    <input type="radio" name="radio_color" checked>
-                                    Gold
-                                </label>
-
-                                <label class="btn btn-light">
-                                    <input type="radio" name="radio_color">
-                                    Black
-                                </label>
+                                <button type="button"
+                                        class="close"
+                                        data-dismiss="alert"
+                                        aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
 
                             </div>
-                        </div>
-                    </div>
+                        {% endfor %}
+                    {% endif %}
 
-                    <!-- SELECT SIZE -->
-                    <div class="row">
-                        <div class="item-option-select">
-                            <h6>Select Size</h6>
+                    <!-- ADD TO CART FORM -->
+                    <form action="{% url 'add_cart' single_product.id %}"
+                          method="POST">
 
-                            <div class="btn-group btn-group-sm btn-group-toggle"
-                                 data-toggle="buttons">
+                        {% csrf_token %}
 
-                                <label class="btn btn-light">
-                                    <input type="radio" name="radio_size">
-                                    S
-                                </label>
+                        <!-- PRODUCT VARIATIONS -->
+                        {% if has_variations %}
 
-                                <label class="btn btn-light active">
-                                    <input type="radio" name="radio_size" checked>
-                                    M
-                                </label>
+                            {% if colors %}
+                                <!-- CHOOSE COLOR -->
+                                <div class="row mb-3">
+                                    <div class="col-md-8">
+                                        <div class="item-option-select">
 
-                                <label class="btn btn-light">
-                                    <input type="radio" name="radio_size">
-                                    L
-                                </label>
+                                            <h6>Choose Color</h6>
 
-                                <label class="btn btn-light">
-                                    <input type="radio" name="radio_size">
-                                    XL
-                                </label>
+                                            <select name="color"
+                                                    class="form-control"
+                                                    required>
 
-                            </div>
-                        </div>
-                    </div>
+                                                <option value="">
+                                                    Select Color
+                                                </option>
+
+                                                {% for color in colors %}
+                                                    <option value="{{ color }}">
+                                                        {{ color }}
+                                                    </option>
+                                                {% endfor %}
+
+                                            </select>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if sizes %}
+                                <!-- SELECT SIZE -->
+                                <div class="row mb-3">
+                                    <div class="col-md-8">
+                                        <div class="item-option-select">
+
+                                            <h6>Select Size</h6>
+
+                                            <select name="size"
+                                                    class="form-control"
+                                                    required>
+
+                                                <option value="">
+                                                    Select Size
+                                                </option>
+
+                                                {% for size in sizes %}
+                                                    <option value="{{ size }}">
+                                                        {{ size }}
+                                                    </option>
+                                                {% endfor %}
+
+                                            </select>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- VARIATION STOCK -->
+                            {% if variations %}
+                                <p class="text-success">
+                                    <i class="fa fa-check-circle"></i>
+                                    Available variations are in stock.
+                                </p>
+                            {% else %}
+                                <div class="alert alert-danger">
+                                    All variations are currently out of stock.
+                                </div>
+                            {% endif %}
+
+                        {% else %}
+
+                            <!-- STANDARD PRODUCT -->
+                            <p>
+                                <strong>Stock:</strong>
+
+                                {% if single_product.stock > 0 %}
+                                    <span class="text-success">
+                                        {{ single_product.stock }} available
+                                    </span>
+                                {% else %}
+                                    <span class="text-danger">
+                                        Out of Stock
+                                    </span>
+                                {% endif %}
+                            </p>
+
+                            <p class="text-muted">
+                                Standard product - No variations required.
+                            </p>
+
+                        {% endif %}
+
+                        <hr>
+
+                        <!-- ADD TO CART BUTTON -->
+
+                        {% if has_variations %}
+
+                            {% if variations %}
+                                <button type="submit"
+                                        class="btn btn-primary">
+
+                                    <span class="text">Add to Cart</span>
+                                    <i class="fas fa-shopping-cart"></i>
+
+                                </button>
+                            {% endif %}
+
+                        {% else %}
+
+                            {% if single_product.stock > 0 %}
+                                <button type="submit"
+                                        class="btn btn-primary">
+
+                                    <span class="text">Add to Cart</span>
+                                    <i class="fas fa-shopping-cart"></i>
+
+                                </button>
+                            {% else %}
+                                <button type="button"
+                                        class="btn btn-danger"
+                                        disabled>
+                                    Out of Stock
+                                </button>
+                            {% endif %}
+
+                        {% endif %}
+
+                        <!-- VIEW CART BUTTON -->
+                        <a href="{% url 'cart' %}"
+                           class="btn btn-outline-primary">
+
+                            View Cart
+                            <i class="fa fa-eye"></i>
+
+                        </a>
+
+                    </form>
 
                     <hr>
 
-                    <!-- STOCK AVAILABILITY -->
-                    {% if single_product.stock > 0 %}
+                    <!-- PRODUCT AVAILABILITY -->
+                    <p>
+                        <strong>Availability:</strong>
 
-                        <a href="#" class="btn btn-primary">
-                            <span class="text">Add to cart</span>
-                            <i class="fas fa-shopping-cart"></i>
-                        </a>
+                        {% if has_variations %}
 
-                    {% else %}
+                            {% if variations %}
+                                <span class="text-success">In Stock</span>
+                            {% else %}
+                                <span class="text-danger">Out of Stock</span>
+                            {% endif %}
 
-                        <button class="btn btn-danger" disabled>
-                            Out of stock
-                        </button>
+                        {% else %}
 
-                    {% endif %}
+                            {% if single_product.stock > 0 %}
+                                <span class="text-success">In Stock</span>
+                            {% else %}
+                                <span class="text-danger">Out of Stock</span>
+                            {% endif %}
+
+                        {% endif %}
+                    </p>
 
                 </article>
             </main>
 
         </div>
     </div>
+
     <!-- PRODUCT DETAILS END -->
 
     <br>
@@ -179,6 +293,7 @@
 
         </div>
     </div>
+
     <!-- CUSTOMER REVIEWS END -->
 
 </div>

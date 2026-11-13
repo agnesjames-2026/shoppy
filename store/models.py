@@ -24,3 +24,45 @@ class product(models.Model):
             'product_detail',
             args=[self.category.slug, self.slug]
         )
+
+#Product Variation
+
+
+class ProductVariation(models.Model):
+
+    product = models.ForeignKey(
+        product,
+        on_delete=models.CASCADE,
+        related_name='variations'
+    )
+
+    color = models.CharField(
+        max_length=50,
+        blank=True,
+        default=''
+    )
+
+    size = models.CharField(
+        max_length=20,
+        blank=True,
+        default=''
+    )
+
+    stock = models.PositiveIntegerField(default=0)
+
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['product', 'color', 'size'],
+                name='unique_product_color_size'
+            )
+        ]
+
+    def __str__(self):
+        variation_name = ' - '.join(
+            value for value in [self.color, self.size] if value
+        )
+
+        return f"{self.product.product_name} - {variation_name or 'Default'}"

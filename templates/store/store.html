@@ -19,7 +19,6 @@
 
             <!-- SIDEBAR -->
             <aside class="col-md-3">
-
                 <div class="card">
 
                     <!-- CATEGORIES -->
@@ -38,7 +37,9 @@
                                 <ul class="list-menu">
 
                                     <li>
-                                        <a href="{% url 'store' %}">All Products</a>
+                                        <a href="{% url 'store' %}">
+                                            All Products
+                                        </a>
                                     </li>
 
                                     {% for category in links %}
@@ -147,20 +148,25 @@
                     </article>
 
                 </div>
-
             </aside>
 
             <!-- PRODUCT SECTION -->
             <main class="col-md-9">
 
+                <!-- PRODUCT COUNT -->
                 <header class="border-bottom mb-4 pb-3">
                     <div class="form-inline">
                         <span class="mr-md-auto">
                             <b>{{ product_count }}</b> Items found
+
+                            {% if keyword %}
+                                for "<strong>{{ keyword }}</strong>"
+                            {% endif %}
                         </span>
                     </div>
                 </header>
 
+                <!-- PRODUCT LIST -->
                 <div class="row">
 
                     {% for product in products %}
@@ -171,12 +177,10 @@
 
                             <!-- PRODUCT IMAGE -->
                             <div class="img-wrap">
-
                                 <a href="{{ product.get_url }}">
                                     <img src="{{ product.images.url }}"
                                          alt="{{ product.product_name }}">
                                 </a>
-
                             </div>
 
                             <!-- PRODUCT DETAILS -->
@@ -197,9 +201,30 @@
 
                                 </div>
 
-                                <a href="#" class="btn btn-block btn-primary">
-                                    Add to cart
-                                </a>
+                                <!-- ADD TO CART -->
+                                {% if product.stock > 0 %}
+
+                                    <form action="{% url 'add_cart' product.id %}"
+                                          method="POST">
+
+                                        {% csrf_token %}
+
+                                        <button type="submit"
+                                                class="btn btn-block btn-primary">
+                                            Add to cart
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </button>
+
+                                    </form>
+
+                                {% else %}
+
+                                    <button class="btn btn-block btn-danger"
+                                            disabled>
+                                        Out of stock
+                                    </button>
+
+                                {% endif %}
 
                             </figcaption>
 
@@ -209,8 +234,26 @@
 
                     {% empty %}
 
-                    <div class="col-md-12">
-                        <h4>No products available.</h4>
+                    <!-- NO PRODUCTS FOUND -->
+                    <div class="col-md-12 text-center">
+
+                        <h4>No products found!</h4>
+
+                        {% if keyword %}
+                            <p>
+                                No products match "{{ keyword }}".
+                            </p>
+                        {% else %}
+                            <p>
+                                No products are currently available.
+                            </p>
+                        {% endif %}
+
+                        <a href="{% url 'store' %}"
+                           class="btn btn-primary">
+                            Continue Shopping
+                        </a>
+
                     </div>
 
                     {% endfor %}
@@ -218,29 +261,67 @@
                 </div>
 
                 <!-- PAGINATION -->
+                {% if products.has_other_pages %}
+
                 <nav class="mt-4" aria-label="Page navigation">
-                    <ul class="pagination">
+
+                    <ul class="pagination justify-content-center">
+
+                        <!-- PREVIOUS -->
+                        {% if products.has_previous %}
+
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="?keyword={{ keyword|urlencode }}&page={{ products.previous_page_number }}">
+                                Previous
+                            </a>
+                        </li>
+
+                        {% else %}
+
                         <li class="page-item disabled">
-                            <a class="page-link" href="#">Previous</a>
+                            <span class="page-link">Previous</span>
                         </li>
 
-                        <li class="page-item active">
-                            <a class="page-link" href="#">1</a>
+                        {% endif %}
+
+                        <!-- PAGE NUMBERS -->
+                        {% for page_number in products.paginator.page_range %}
+
+                        <li class="page-item {% if products.number == page_number %}active{% endif %}">
+
+                            <a class="page-link"
+                               href="?keyword={{ keyword|urlencode }}&page={{ page_number }}">
+                                {{ page_number }}
+                            </a>
+
                         </li>
+
+                        {% endfor %}
+
+                        <!-- NEXT -->
+                        {% if products.has_next %}
 
                         <li class="page-item">
-                            <a class="page-link" href="#">2</a>
+                            <a class="page-link"
+                               href="?keyword={{ keyword|urlencode }}&page={{ products.next_page_number }}">
+                                Next
+                            </a>
                         </li>
 
-                        <li class="page-item">
-                            <a class="page-link" href="#">3</a>
+                        {% else %}
+
+                        <li class="page-item disabled">
+                            <span class="page-link">Next</span>
                         </li>
 
-                        <li class="page-item">
-                            <a class="page-link" href="#">Next</a>
-                        </li>
+                        {% endif %}
+
                     </ul>
+
                 </nav>
+
+                {% endif %}
 
             </main>
 
